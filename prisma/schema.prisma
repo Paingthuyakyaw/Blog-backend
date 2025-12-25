@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-ts"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  email           String?   @unique @db.VarChar(52)
+  createdAt       DateTime  @default(now())
+  errorLoginCount Int       @default(0) @db.SmallInt
+  firstName       String?   @db.VarChar(50)
+  image           String
+  lastLogin       DateTime?
+  lastName        String?   @db.VarChar(50)
+  phone           String    @db.VarChar(15)
+  randToken       String
+  role            Role      @default(USER)
+  status          Status    @default(ACTIVE)
+  updatedAt       DateTime  @updatedAt
+  password String?
+  orders          Order[]
+  posts           Post[]
+}
+
+model Post {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  title      String   @db.VarChar(255)
+  content    String
+  body       String
+  image      String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  categoryId Int
+  typeId     Int
+  category   Category @relation(fields: [categoryId], references: [id])
+  type       Type     @relation(fields: [typeId], references: [id])
+  users      User     @relation(fields: [userId], references: [id])
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String    @db.VarChar(55)
+  posts    Post[]
+  products Product[]
+}
+
+model Type {
+  id       Int       @id @default(autoincrement())
+  name     String    @db.VarChar(55)
+  posts    Post[]
+  products Product[]
+}
+
+model Tag {
+  id       Int        @id @default(autoincrement())
+  name     String     @db.VarChar(55)
+  taggable Taggable[]
+}
+
+model Taggable {
+  id     Int    @id @default(autoincrement())
+  tagId  Int
+  typeId Int
+  type   String @db.VarChar(17)
+  tag    Tag    @relation(fields: [tagId], references: [id])
+}
+
+model Product {
+  id          Int                @id @default(autoincrement())
+  name        String             @db.VarChar(255)
+  description String?
+  price       String             @db.VarChar(17)
+  discount    String             @db.VarChar(17)
+  rating      Int                @default(0) @db.SmallInt
+  inventory   Int                @default(0)
+  status      Status             @default(ACTIVE)
+  categoryId  Int
+  typeId      Int
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  images      Image[]
+  category    Category           @relation(fields: [categoryId], references: [id])
+  type        Type               @relation(fields: [typeId], references: [id])
+  orders      ProductsOnOrders[]
+}
+
+model Image {
+  id        Int     @id @default(autoincrement())
+  path      String
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model Order {
+  id         Int                @id @default(autoincrement())
+  userId     Int
+  code       String             @db.VarBit(17)
+  totalPrice String
+  creatAt    DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  user       User               @relation(fields: [userId], references: [id])
+  products   ProductsOnOrders[]
+}
+
+model ProductsOnOrders {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  quantity  Int
+  price     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  order     Order    @relation(fields: [orderId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+}
+
+model Otp {
+  id            Int      @id @default(autoincrement())
+  otp           String   @db.VarChar(15)
+  phone         String
+  rememberToken String
+  verifyToken   String?
+  count         Int      @default(0) @db.SmallInt
+  error         Int      @db.SmallInt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
+  AUTHOR
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+  FREEZE
+}
