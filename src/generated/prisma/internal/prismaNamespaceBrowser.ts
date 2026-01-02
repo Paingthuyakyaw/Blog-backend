@@ -93,7 +93,8 @@ export const UserScalarFieldEnum = {
   randToken: 'randToken',
   role: 'role',
   status: 'status',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  password: 'password'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]

@@ -1,23 +1,30 @@
+import { error } from "node:console";
 import { prisma } from "./lib/prisma";
+import { faker } from "@faker-js/faker";
+
+const randomUser = () => ({
+  email: faker.internet.email(),
+  firstName: faker.person.firstName(),
+  lastName: faker.person.lastName(),
+  phone: faker.phone.number(),
+  image: faker.image.avatar(),
+  errorLoginCount: faker.number.int({ min: 0, max: 3 }),
+  randToken: faker.string.alphanumeric(10),
+  password: faker.internet.password(),
+});
+
+const userData = faker.helpers.multiple(randomUser, { count: 10 });
 
 async function main() {
-  // Create a new user with a post
-  const user = await prisma.user.create({
-    data: {
-      email: "Joe@gmail.com",
-      firstName: "Joe",
-      lastName: "Wye",
-      phone: "0912121212",
-      image: "https://github.com/shadcn.png",
-      errorLoginCount: 0,
-      randToken: "eJhofsafd",
-    },
-  });
-  console.log("Created user:", user);
+  // Create  new users
 
+  for (const user of userData) {
+    const createdUser = await prisma.user.create({
+      data: user,
+    });
+  }
   // Fetch all users with their posts
   const allUsers = await prisma.user.findMany();
-  console.log("All users:", JSON.stringify(allUsers, null, 2));
 }
 
 main()

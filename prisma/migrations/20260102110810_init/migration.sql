@@ -1,16 +1,44 @@
-/*
-  Warnings:
+-- CreateEnum
+CREATE TYPE "Role" AS ENUM ('USER', 'ADMIN', 'AUTHOR');
 
-  - Added the required column `categoryId` to the `Post` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `typeId` to the `Post` table without a default value. This is not possible if the table is not empty.
+-- CreateEnum
+CREATE TYPE "Status" AS ENUM ('ACTIVE', 'INACTIVE', 'FREEZE');
 
-*/
--- AlterTable
-ALTER TABLE "Post" ADD COLUMN     "categoryId" INTEGER NOT NULL,
-ADD COLUMN     "typeId" INTEGER NOT NULL;
+-- CreateTable
+CREATE TABLE "User" (
+    "id" SERIAL NOT NULL,
+    "email" VARCHAR(52),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "errorLoginCount" SMALLINT NOT NULL DEFAULT 0,
+    "firstName" VARCHAR(50),
+    "image" TEXT NOT NULL,
+    "lastLogin" TIMESTAMP(3),
+    "lastName" VARCHAR(50),
+    "phone" VARCHAR(15) NOT NULL,
+    "randToken" TEXT NOT NULL,
+    "role" "Role" NOT NULL DEFAULT 'USER',
+    "status" "Status" NOT NULL DEFAULT 'ACTIVE',
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "password" TEXT,
 
--- AlterTable
-ALTER TABLE "User" ALTER COLUMN "email" DROP NOT NULL;
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Post" (
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "title" VARCHAR(255) NOT NULL,
+    "content" TEXT NOT NULL,
+    "body" TEXT NOT NULL,
+    "image" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "categoryId" INTEGER NOT NULL,
+    "typeId" INTEGER NOT NULL,
+
+    CONSTRAINT "Post_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateTable
 CREATE TABLE "Category" (
@@ -98,11 +126,32 @@ CREATE TABLE "ProductsOnOrders" (
     CONSTRAINT "ProductsOnOrders_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "Otp" (
+    "id" SERIAL NOT NULL,
+    "otp" VARCHAR(15) NOT NULL,
+    "phone" TEXT NOT NULL,
+    "rememberToken" TEXT NOT NULL,
+    "verifyToken" TEXT,
+    "count" SMALLINT NOT NULL DEFAULT 0,
+    "error" SMALLINT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Otp_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
 -- AddForeignKey
 ALTER TABLE "Post" ADD CONSTRAINT "Post_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Post" ADD CONSTRAINT "Post_typeId_fkey" FOREIGN KEY ("typeId") REFERENCES "Type"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Post" ADD CONSTRAINT "Post_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Taggable" ADD CONSTRAINT "Taggable_tagId_fkey" FOREIGN KEY ("tagId") REFERENCES "Tag"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -9,14 +9,14 @@ datasource db {
 
 model User {
   id              Int       @id @default(autoincrement())
-  email           String?   @unique @db.VarChar(52)
+  email           String?   @unique @db.VarChar(255)
   createdAt       DateTime  @default(now())
   errorLoginCount Int       @default(0) @db.SmallInt
   firstName       String?   @db.VarChar(50)
   image           String
   lastLogin       DateTime?
   lastName        String?   @db.VarChar(50)
-  phone           String    @db.VarChar(15)
+  phone           String    @db.VarChar(25)
   randToken       String
   role            Role      @default(USER)
   status          Status    @default(ACTIVE)
