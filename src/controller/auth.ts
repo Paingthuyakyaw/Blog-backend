@@ -1,20 +1,46 @@
 import { NextFunction, Request, Response } from "express";
 import { body, validationResult } from "express-validator";
+import { createOtp, generateOTP, generateToken } from "../util/generate";
+import bcrypt from "bcrypt";
+import { prisma } from "../../lib/prisma";
 
 export const register = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  console.log("Request Body:", req.body);
+  try {
+    const error = validationResult(req);
+    if (!error.isEmpty()) {
+      return res.status(400).json({
+        errors: error.array().map((err: any) => ({ [err.path]: err.msg })),
+      });
+    }
 
-  const error = validationResult(req);
-  if (!error.isEmpty()) {
-    return res.status(400).json({
-      errors: error.array().map((err: any) => ({ [err.path]: err.msg })),
+    const { phone } = req.body;
+
+    const exitsPhone = await prisma.otp.findFirst({
+      where: { phone },
     });
+
+    if (exitsPhone) {
+      return res.status(400).json({ message: "Phone number already exists" });
+    }
+
+    const otp = generateOTP();
+    const randomToken = generateToken();
+
+    const createdOtp = await createOtp({
+      phone: req.body.phone,
+      otp: await bcrypt.hash(otp.toString(), 10),
+      token: randomToken,
+      count: 1,
+    });
+
+    return res.status(201).json({ message: "Register success" });
+  } catch (err) {
+    return next(err);
   }
-  return res.status(201).json({ message: "Register success" });
 };
 
 export const verifyOtp = async (

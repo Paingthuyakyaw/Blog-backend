@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Otp" ALTER COLUMN "error" DROP NOT NULL;
