@@ -5,12 +5,12 @@ import {
   register,
   verifyOtp,
 } from "../controller/auth";
-import { registerValidation } from "../validation/auth";
+import { registerValidation, verifyOtpValidation } from "../validation/auth";
 
 const router = express.Router();
 
 router.post("/register", registerValidation, register);
-router.post("/verify-otp", verifyOtp);
+router.post("/verify-otp", verifyOtpValidation, verifyOtp);
 router.post("/confirm-password", confirmPassword);
 router.post("/login", login);
 

@@ -15,3 +15,20 @@ export const registerValidation = checkSchema({
     notEmpty: { errorMessage: "Phone number is required" },
   },
 });
+
+export const verifyOtpValidation = checkSchema({
+  phone: {
+    errorMessage: "Invalid phone number",
+    trim: true,
+  },
+  otp: {
+    errorMessage: "OTP is required",
+    isLength: {
+      options: { min: 6, max: 6 },
+    },
+  },
+  token: {
+    errorMessage: "Token is required",
+    notEmpty: true,
+  },
+});

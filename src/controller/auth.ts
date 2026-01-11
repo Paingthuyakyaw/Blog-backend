@@ -3,6 +3,7 @@ import { body, validationResult } from "express-validator";
 import { createOtp, generateOTP, generateToken } from "../util/generate";
 import bcrypt from "bcrypt";
 import { prisma } from "../../lib/prisma";
+import dayjs from "dayjs";
 
 export const register = async (
   req: Request,
@@ -19,25 +20,56 @@ export const register = async (
 
     const { phone } = req.body;
 
-    const exitsPhone = await prisma.otp.findFirst({
+    const existsPhone = await prisma.otp.findFirst({
       where: { phone },
     });
-
-    if (exitsPhone) {
-      return res.status(400).json({ message: "Phone number already exists" });
-    }
 
     const otp = generateOTP();
     const randomToken = generateToken();
 
-    const createdOtp = await createOtp({
-      phone: req.body.phone,
-      otp: await bcrypt.hash(otp.toString(), 10),
-      token: randomToken,
-      count: 1,
-    });
+    let result;
 
-    return res.status(201).json({ message: "Register success" });
+    if (!existsPhone) {
+      result = await createOtp({
+        phone: req.body.phone,
+        otp: await bcrypt.hash(otp.toString(), 10),
+        token: randomToken,
+        count: 1,
+      });
+    } else {
+      if (dayjs(existsPhone.updatedAt).isSame(dayjs(), "day")) {
+        if (existsPhone.count >= 4) {
+          return res.status(429).json({
+            message:
+              "You have exceeded the maximum number of OTP requests. Please try again later.",
+          });
+        } else {
+          result = await prisma.otp.update({
+            where: { id: existsPhone.id },
+            data: {
+              otp: await bcrypt.hash(otp.toString(), 10),
+              rememberToken: randomToken,
+              count: { increment: 1 },
+            },
+          });
+        }
+      } else {
+        result = await prisma.otp.update({
+          where: { id: existsPhone.id },
+          data: {
+            otp: await bcrypt.hash(otp.toString(), 10),
+            rememberToken: randomToken,
+            count: 1,
+          },
+        });
+      }
+    }
+
+    return res.status(201).json({
+      message: "Register success",
+      opt: result.otp,
+      rememberToken: result.rememberToken,
+    });
   } catch (err) {
     return next(err);
   }
@@ -48,6 +80,20 @@ export const verifyOtp = async (
   res: Response,
   next: NextFunction
 ) => {
+  const { phone, otp, token } = req.body;
+
+  const existsPhone = await prisma.user.findFirst({ where: { phone } });
+  if (existsPhone) {
+    return res.status(400).json({ message: "Phone number already registered" });
+  }
+
+  const otpRecord = await prisma.otp.findFirst({
+    where: { phone, rememberToken: token },
+  });
+  if (!otpRecord) {
+    return res.status(400).json({ message: "Invalid phone number" });
+  }
+
   return res.status(200).json({ message: "OTP verified successfully" });
 };
 
